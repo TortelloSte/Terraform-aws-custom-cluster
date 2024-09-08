@@ -1,7 +1,5 @@
 provider "aws" {
-  access_key = "token-1"
-  secret_key = "token-2"
-  region     = "eu-west-3"
+  region = var.region
 }
 
 data "aws_availability_zones" "available" {
