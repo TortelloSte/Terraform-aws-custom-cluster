@@ -1,6 +1,9 @@
 # Terraform-aws-custom-cluster
 
 ### How to start cluster on EKS:
+1. Navigate to the CustomTerraformCluster folder for a complex Terraform cluster setup.
+2. Navigate to the CustomTerraformClusterEasy folder for a simpler Terraform cluster setup.
+
 run:
 ```
 terraform init
