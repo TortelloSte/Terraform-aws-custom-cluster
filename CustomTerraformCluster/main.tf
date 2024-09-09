@@ -82,9 +82,9 @@ resource "aws_eks_node_group" "node_group" {
     min_size     = 2
   }
  
-  instance_types = ["m6i.2xlarge"] # or t3.2xlarge
+  instance_types = ["t3.nano"] # choose at this site: https://aws.amazon.com/it/ec2/instance-types/
   capacity_type  = "ON_DEMAND"
-  disk_size      = 128
+  disk_size      = 10
  
   tags = {
     Name = "node-group-tag-name"

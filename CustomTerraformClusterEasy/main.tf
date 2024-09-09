@@ -76,7 +76,7 @@ module "eks" {
     one = {
       name = "node-group-1"
 
-      instance_types = ["t3.2xlarge"]
+      instance_types = ["t3.nano"] # https://aws.amazon.com/it/ec2/instance-types/
       capacity_type  = "ON_DEMAND"
 
       min_size     = 2

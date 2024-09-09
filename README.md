@@ -1,6 +1,6 @@
 # Terraform-aws-custom-cluster
 
-### How to start cluster on EKS:
+## How to start cluster on EKS:
 1. Navigate to the CustomTerraformCluster folder for a complex Terraform cluster setup.
 2. Navigate to the CustomTerraformClusterEasy folder for a simpler Terraform cluster setup.
 
@@ -18,7 +18,7 @@ terraform destroy -auto-approve
 ```
 
 
-# Download AWS-CLI
+## Download AWS-CLI
 Go on terminal and digit (download aws cli form MACOS)
 
 https://awscli.amazonaws.com/AWSCLIV2.pkg -> download 
@@ -26,7 +26,7 @@ https://awscli.amazonaws.com/AWSCLIV2.pkg -> download
 check on terminal if ended: 
 aws --version
 
-# Download Kubectl 
+## Download Kubectl 
 download kubectl for macOS apple silicon:
 ```
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/arm64/kubectl"
@@ -40,9 +40,13 @@ kubectl version --client
 rm kubectl.sha256
 ```
 
-# Run on Local the cluster:
+## Run on Local the cluster:
 ```
 aws eks update-kubeconfig --name (cluster name)
 kubectl config get-contexts
 kubectl config use-context (cluster name)
 ```
+
+
+## How to choose disk dimension:
+https://aws.amazon.com/it/ec2/instance-types/
