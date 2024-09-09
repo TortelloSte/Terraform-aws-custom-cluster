@@ -10,14 +10,14 @@ data "aws_availability_zones" "available" {
 }
  
 locals {
-  cluster_name = "eks-greenscore-prod-ng"
+  cluster_name = "cluster-name"
 }
  
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.8.1"
  
-  name = "prod-ng-vpc"
+  name = "vpc-name"
  
   cidr = "10.1.0.0/16"
   azs  = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -72,7 +72,7 @@ module "eks" {
  
 resource "aws_eks_node_group" "node_group" {
   cluster_name    = module.eks.cluster_name
-  node_group_name = "prod-ng-node-group"
+  node_group_name = "node-group-name"
   node_role_arn   = aws_iam_role.eks_node_role.arn
   subnet_ids      = module.vpc.private_subnets
  
@@ -82,12 +82,12 @@ resource "aws_eks_node_group" "node_group" {
     min_size     = 2
   }
  
-  instance_types = ["m6i.2xlarge"]
+  instance_types = ["m6i.2xlarge"] # or t3.2xlarge
   capacity_type  = "ON_DEMAND"
   disk_size      = 128
  
   tags = {
-    Name = "eks-prod-ng-node-group"
+    Name = "node-group-tag-name"
   }
 }
  
@@ -130,8 +130,7 @@ data "aws_eks_cluster_auth" "eks" {
   name       = module.eks.cluster_name
   depends_on = [module.eks.cluster_name]
 }
- 
-# Ruolo IAM minimo per il node group
+
 resource "aws_iam_role" "eks_node_role" {
   assume_role_policy = data.aws_iam_policy_document.eks_node_assume_role_policy.json
 }
@@ -160,4 +159,32 @@ resource "aws_iam_role_policy_attachment" "AmazonEC2ContainerRegistryReadOnly" {
 resource "aws_iam_role_policy_attachment" "AmazonEKS_CNI_Policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
   role       = aws_iam_role.eks_node_role.name
+}
+
+# Add on: efs-csi and metrics into cluster
+
+# AWS EFS CSI Driver installation by helm
+resource "helm_release" "aws_efs_csi_driver" {
+  name       = "aws-efs-csi-driver"
+  repository = "https://kubernetes-sigs.github.io/aws-efs-csi-driver"
+  chart      = "aws-efs-csi-driver"
+  namespace  = "kube-system"
+  create_namespace = true
+}
+
+# Metric Server Installation
+resource "kubernetes_manifest" "metrics_server_base" {
+  provider = kubernetes
+  manifest = yamldecode(
+    file("https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml")
+  )
+}
+
+resource "kubernetes_manifest" "metrics_server_high_availability" {
+  provider = kubernetes
+  manifest = yamldecode(
+    file("https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/high-availability-1.21+.yaml")
+  )
+  
+  depends_on = [kubernetes_manifest.metrics_server_base]
 }
