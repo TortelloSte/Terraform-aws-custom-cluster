@@ -46,7 +46,7 @@ aws eks update-kubeconfig --name (cluster name)
 kubectl config get-contexts
 kubectl config use-context (cluster name)
 ```
-
+I suggest to use lens to control your cluster: https://k8slens.dev
 
 ## How to choose disk dimension:
 https://aws.amazon.com/it/ec2/instance-types/
