@@ -48,5 +48,25 @@ kubectl config use-context (cluster name)
 ```
 I suggest to use lens to control your cluster: https://k8slens.dev
 
+#### Addon if want to install manually efs-csi driver and metric-server:
+```
+helm repo update
+helm repo list 
+``` -> verify that the aws-efs-csi-driver repo is added, if not, add it
+
+```
+helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
+helm search repo aws-efs-csi-driver
+helm upgrade --install aws-efs-csi-driver --namespace kube-system aws-efs-csi-driver/aws-efs-csi-driver
+```
+
+https://github.com/kubernetes-sigs/metrics-server
+
+``
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/high-availability-1.21+.yaml
+```
+
+
 ## How to choose disk dimension:
 https://aws.amazon.com/it/ec2/instance-types/
