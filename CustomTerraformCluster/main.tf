@@ -188,3 +188,111 @@ resource "kubernetes_manifest" "metrics_server_high_availability" {
   
   depends_on = [kubernetes_manifest.metrics_server_base]
 }
+
+# installation of AWS load balancer controller and adding WAF from Terraform
+
+# AWS Load Balancer Controller setup
+resource "aws_iam_policy" "aws_load_balancer_controller_policy" {
+  name   = "AWSLoadBalancerControllerIAMPolicy"
+  path   = "/"
+  policy = file("iam_policy_latest.json")
+}
+
+resource "aws_iam_role" "load_balancer_controller_role" {
+  assume_role_policy = data.aws_iam_policy_document.eks_assume_role_policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "attach_load_balancer_policy" {
+  policy_arn = aws_iam_policy.aws_load_balancer_controller_policy.arn
+  role       = aws_iam_role.load_balancer_controller_role.name
+}
+
+resource "helm_release" "aws_load_balancer_controller" {
+  name       = "aws-load-balancer-controller"
+  repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-load-balancer-controller"
+  namespace  = "kube-system"
+
+  set {
+    name  = "clusterName"
+    value = local.cluster_name
+  }
+
+  set {
+    name  = "serviceAccount.create"
+    value = "false"
+  }
+
+  set {
+    name  = "serviceAccount.name"
+    value = "iam-test-001"
+  }
+
+  set {
+    name  = "region"
+    value = var.region
+  }
+
+  set {
+    name  = "vpcId"
+    value = module.vpc.vpc_id
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.attach_load_balancer_policy]
+}
+
+# AWS WAF for Load Balancer
+resource "aws_wafv2_web_acl" "lb_waf" {
+  name        = "lb-web-acl"
+  description = "WAF for load balancer controller"
+  scope       = "REGIONAL"
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "block-bad-requests"
+    priority = 1
+    action {
+      block {}
+    }
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "blocked_requests"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "waf_metric"
+    sampled_requests_enabled   = true
+  }
+}
+
+resource "aws_wafv2_web_acl_association" "lb_waf_association" {
+  resource_arn = aws_lb.alb.arn
+  web_acl_arn  = aws_wafv2_web_acl.lb_waf.arn
+}
+
+# Load Balancer resource
+resource "aws_lb" "alb" {
+  name               = "eks-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [module.vpc.default_security_group_id]
+  subnets            = module.vpc.public_subnets
+
+  enable_deletion_protection = false
+  idle_timeout               = 400
+
+  tags = {
+    Name = "eks-alb"
+  }
+}
