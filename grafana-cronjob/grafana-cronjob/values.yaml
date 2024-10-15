@@ -1,0 +1,2 @@
+grafanaUrl: "http://my-monitoring-grafana.default.svc.cluster.local"
+grafanaApiKey: "sa-1-test-720be7b8-d3e3-491d-95c6-2fb077105443"  # API KEY DA ESTRARRE DALLO USER!

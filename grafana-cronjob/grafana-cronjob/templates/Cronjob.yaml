@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: grafana-data-retriever
+spec:
+  schedule: "*/5 * * * *"  # Ogni 5 minuti
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: grafana-data-retriever
+              image: tortelloste/curl-jq:latest 
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  /scripts/retrieve-data.sh  # Esegue lo script
+              env:
+                - name: GRAFANA_API_KEY
+                  value: "{{ .Values.grafanaApiKey }}"
+                - name: GRAFANA_URL
+                  value: "{{ .Values.grafanaUrl }}"
+                - name: DASHBOARD_UID
+                  value: "{{ .Values.dashboardUid }}"
+              volumeMounts:
+                - name: log-volume
+                  mountPath: /data
+          restartPolicy: OnFailure
+          volumes:
+            - name: log-volume
+              emptyDir: {}
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            fsGroup: 0
