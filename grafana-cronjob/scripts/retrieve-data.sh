@@ -1,24 +1,34 @@
 #!/bin/sh
 
 # Imposta l'UID della dashboard "test"
-DASHBOARD_UID="your_dashboard_uid_here"
+DASHBOARD_UID="ce0uvccdzabk0a"  # Verifica che sia corretto
+GRAFANA_API_KEY="sa-1-test-720be7b8-d3e3-491d-95c6-2fb077105443"
+GRAFANA_URL="http://my-monitoring-grafana.default.svc.cluster.local"
 
-mkdir -p /data/Log  # Crea la cartella Log
-timestamp=$(date +"%Y-%m-%d_%H-%M-%S")  # Crea un timestamp per il nome del file
+# Fai una chiamata curl all'API di Grafana per ottenere i dati della dashboard
+dashboard_data=$(curl -s -G -H "Authorization: Bearer $GRAFANA_API_KEY" "$GRAFANA_URL/api/dashboards/uid/$DASHBOARD_UID")
 
-# Scarica la configurazione della dashboard chiamata "test"
-dashboard_data=$(curl -G -H "Authorization: Bearer $GRAFANA_API_KEY" "$GRAFANA_URL/api/dashboards/uid/$DASHBOARD_UID")
+# Verifica che la chiamata curl abbia avuto successo
+if [ $? -ne 0 ]; then
+    echo "Errore durante la richiesta a Grafana API."
+    exit 1
+fi
 
-# Filtra la dashboard con il titolo "test" e accedi alla sezione "Host Overview"
-host_overview=$(echo $dashboard_data | jq '.dashboard.panels[] | select(.title == "Host Overview")')
+# Controlla se dashboard_data è vuoto o se ci sono errori
+if [ -z "$dashboard_data" ]; then
+    echo "Errore: Nessun dato restituito dalla dashboard con UID $DASHBOARD_UID."
+    exit 1
+fi
 
-# Recupera i pannelli presenti nella sezione "Host Overview"
-panels=$(echo $host_overview | jq '.panels[]')
+# Usa jq per trovare il pannello con il titolo "CPU"
+cpu_panel=$(echo "$dashboard_data" | jq '.dashboard.panels[] | select(.title == "CPU")')
 
-# Inizializza il file di log
-echo "Pannelli presenti nella dashboard 'Host Overview':" > /data/Log/grafana_data_$timestamp.log
+# Verifica se il pannello è stato trovato
+if [ -z "$cpu_panel" ]; then
+    echo "Nessun pannello trovato con il titolo 'CPU'"
+    exit 1
+fi
 
-# Aggiunge i valori di tutti e 14 i pannelli nel file di log
-for panel in $(echo "$panels" | jq -c '.'); do
-    echo $panel >> /data/Log/grafana_data_$timestamp.log
-done
+# Stampa i dettagli del pannello CPU
+echo "Pannello CPU trovato:"
+echo "$cpu_panel"
