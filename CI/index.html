@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Node App</title>
+</head>
+<body>
+  <h1>Welcome to My Simple Node App!</h1>
+  <p>This is a minimal Node.js application with CRUD operations.</p>
+
+  <form id="noteForm">
+    <input type="text" id="noteInput" placeholder="Write a note" required>
+    <button type="submit">Add Note</button>
+  </form>
+
+  <ul id="notesList"></ul>
+
+  <script>
+    const noteForm = document.getElementById('noteForm');
+    const noteInput = document.getElementById('noteInput');
+    const notesList = document.getElementById('notesList');
+
+    // Fetch and display notes
+    async function fetchNotes() {
+      const res = await fetch('/api/notes');
+      const notes = await res.json();
+      notesList.innerHTML = notes.map(note => `<li>${note.text} <button onclick="deleteNote(${note.id})">Delete</button></li>`).join('');
+    }
+
+    // Add note
+    noteForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = noteInput.value;
+      await fetch('/api/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      noteInput.value = '';
+      fetchNotes();
+    });
+
+    // Delete note
+    async function deleteNote(id) {
+      await fetch(`/api/notes/${id}`, { method: 'DELETE' });
+      fetchNotes();
+    }
+
+    // Initial fetch
+    fetchNotes();
+  </script>
+</body>
+</html>
