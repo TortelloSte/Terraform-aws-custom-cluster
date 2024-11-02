@@ -13,3 +13,6 @@ Verrà dunque generato un file chiamato package.json il quale avrà al suo inter
 node server.js
 ```
 Apri un browser e vai a http://localhost:3000. Dovresti vedere la pagina HTML con il messaggio di benvenuto.
+
+ora npm install jest --save-dev
+
